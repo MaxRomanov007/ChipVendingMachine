@@ -19,7 +19,7 @@ public class Chips : IDisposable
     {
         Quantity = quantity;
         Price = price;
-        Image = new Bitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Chips", assetPath));
+        Image = new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Chips", assetPath))));
     }
 
     public void Dispose()

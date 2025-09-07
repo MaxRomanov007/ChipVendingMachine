@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using App.Domain.Models;
 using Avalonia.Controls;
@@ -12,35 +14,102 @@ using Microsoft.VisualBasic;
 
 namespace App.Windows;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const double DoorY = 485;
     public List<Chips> Chips { get; set; } =
     [
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
-        new("SaltAndVinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new("salt-and-vinegar.png", 5, 200),
+        new()
     ];
+
+    private int _inserted = 1000;
+    public int Inserted
+    {
+        get => _inserted;
+        set => SetField(ref _inserted, value);
+    }
+
+    private int _balance = 1000;
+    public int Balance
+    {
+        get => _balance;
+        set => SetField(ref _balance, value);
+    }
+
+    private Button? _selectedChipsButton;
+    public Button? SelectedChipsButton
+    {
+        get  => _selectedChipsButton;
+        set => SetField(ref _selectedChipsButton, value);
+    }
 
     public MainWindow()
     {
         InitializeComponent();
     }
 
-    private async void Button_OnClick(object? sender, RoutedEventArgs e)
+    private async void DisplayTextBlock_OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        await ShowMessage("Внесите средства!");
+    }
+
+    private async void ChipsButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button {DataContext: Chips chips} button) return;
+        if (chips.Image is null) return;
+
+        if (SelectedChipsButton is null)
+        {
+            SelectedChipsButton = button;
+            return;
+        }
+        
+        if (Inserted < chips.Price)
+        {
+            await ShowMessage("Недостаточно средств!", TimeSpan.FromSeconds(1));
+            return;
+        }
+        Inserted -= chips.Price;
+        
+        await AnimateChipsFalling(sender);
+        await ShowMessage("Сброшено!", TimeSpan.FromSeconds(1));
+    }
+
+    private void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SelectedChipsButton = null;
+    }
+
+    private void CoinButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button {Tag: string nominalString}) return;
+        if (!int.TryParse(nominalString, out var nominal)) return;
+        Balance -= nominal;
+    }
+
+    private void BanknoteButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button {Tag: string nominalString}) return;
+        if (!int.TryParse(nominalString, out var nominal)) return;
+        Balance -= nominal;
+    }
+
+    private static async Task AnimateChipsFalling(object? sender)
     {
         if (sender is not Button { Content: Panel panel, Parent: ContentPresenter contentPresenter } || 
             panel.Children.Count < 3 || 
@@ -61,5 +130,33 @@ public partial class MainWindow : Window
         await Task.Delay(200);
         
         contentPresenter.ZIndex = 0;
+    }
+
+    private async Task ShowMessage(string? message, TimeSpan? time = null, string? textAfterEnd = null)
+    {
+        var previousText = textAfterEnd ?? DisplayTextBlock.Text;
+        
+        DisplayTextBlock.Text = message;
+        
+        if (time is null) return;
+        
+        await Task.Delay(time.Value);
+
+        DisplayTextBlock.Text = previousText;
+    }
+    
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }
