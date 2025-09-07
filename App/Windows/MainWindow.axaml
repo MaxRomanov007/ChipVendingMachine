@@ -3,18 +3,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:App.Domain.Models"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="900"
         x:Class="App.Windows.MainWindow"
         x:Name="Self"
         Title="App">
     <Window.Styles>
         <Style Selector="Canvas.Place">
-            <Setter Property="RenderTransform" Value="rotate(0deg)" />
-
-            <Style Selector="^:pointerover">
-                <Setter Property="RenderTransform" Value="rotate(360deg)" />
-            </Style>
-
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1" />
@@ -26,11 +20,12 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
-        
+
         <Style Selector="Viewbox.ChipsImage">
             <Setter Property="Transitions">
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3"
+                                                   Easing="QuadraticEaseIn" />
                 </Transitions>
             </Setter>
         </Style>
@@ -54,8 +49,10 @@
     </Window.Resources>
 
     <Grid ColumnDefinitions="*, Auto, *" RowDefinitions="*, Auto, *">
-        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto, Auto" Margin="10" Background="Aquamarine">
-            <ItemsControl ItemsSource="{Binding #Self.Chips}" Margin="10" Background="LightBlue">
+        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto, Auto" RowDefinitions="Auto, Auto, Auto" Margin="10"
+              Background="Aquamarine">
+            <ItemsControl ItemsSource="{Binding #Self.Chips}" Margin="10 10 10 0" Background="LightBlue"
+                          ClipToBounds="False" ZIndex="1">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal" MaxWidth="400" />
@@ -64,18 +61,15 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="models:Chips">
-                        <Button Classes="Borderless" Click="Button_OnClick">
+                        <Button Classes="Borderless" Click="Button_OnClick" ClipToBounds="False" Width="100"
+                                Height="120">
                             <Panel Margin="10">
 
                                 <Canvas Width="75" Height="75" VerticalAlignment="Bottom">
                                     <Ellipse Width="75" Height="75" Stroke="Black" StrokeThickness="3" />
                                 </Canvas>
 
-                                <Viewbox MaxWidth="75" MaxHeight="100" Stretch="Uniform" Classes="ChipsImage">
-                                    <Image Source="{Binding Image}" />
-                                </Viewbox>
-
-                                <Canvas Width="75" Height="75" Classes="Place" VerticalAlignment="Bottom">
+                                <Canvas Width="75" Height="75" Classes="Place" VerticalAlignment="Bottom" ZIndex="1">
                                     <Ellipse Width="75" Height="75" StrokeThickness="3">
                                         <Ellipse.Stroke>
                                             <ConicGradientBrush>
@@ -91,16 +85,20 @@
                                     <Ellipse Margin="35 0" Width="3" Height="3" Stroke="LightGray" StrokeThickness="3" />
                                 </Canvas>
 
+                                <Viewbox Stretch="Uniform" Classes="ChipsImage">
+                                    <Image Source="{Binding Image}" />
+                                </Viewbox>
+
                             </Panel>
                         </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <StackPanel Grid.Column="1" Margin="10" Spacing="10">
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10" Spacing="10">
                 <TextBlock Width="100" Height="100" Background="Blue" Foreground="White" Padding="10" />
 
-                <Button Padding="0">
+                <Button Classes="Borderless">
                     <Panel Background="Blue" Width="75">
                         <Ellipse StrokeThickness="3" Width="50" Height="50"
                                  Stroke="{StaticResource WavesConicGradientBrush}" />
@@ -111,7 +109,27 @@
                     </Panel>
                 </Button>
 
+                <Button Classes="Borderless">
+                    <Rectangle StrokeThickness="3" Stroke="Black" Height="10" Width="100" Fill="GreenYellow" />
+                </Button>
+
+                <StackPanel Spacing="45" Orientation="Horizontal">
+                    <Button Classes="Borderless">
+                        <Rectangle StrokeThickness="4" Stroke="Black" Height="45" Width="10" Fill="LightGray" />
+                    </Button>
+                    
+                    <Button Classes="Borderless" Background="LightGray" Height="45" VerticalContentAlignment="Center" CornerRadius="25">
+                        <TextBlock FontSize="10" Margin="5 0">
+                            Сдача
+                        </TextBlock>
+                    </Button>
+                </StackPanel>
+
             </StackPanel>
+
+            <Rectangle Grid.Row="1" Grid.Column="0" Height="20" Fill="Aquamarine" ZIndex="100" />
+
+            <Rectangle Grid.Row="2" Grid.Column="0" Margin="10 0 10 10" Height="100" Fill="Black" />
         </Grid>
     </Grid>
 </Window>
