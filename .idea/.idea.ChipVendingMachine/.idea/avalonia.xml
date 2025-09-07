@@ -3,7 +3,9 @@
   <component name="AvaloniaProject">
     <option name="projectPerEditor">
       <map>
+        <entry key="App/App.axaml" value="App/App.csproj" />
         <entry key="App/MainWindow.axaml" value="App/App.csproj" />
+        <entry key="App/Windows/MainWindow.axaml" value="App/App.csproj" />
       </map>
     </option>
   </component>

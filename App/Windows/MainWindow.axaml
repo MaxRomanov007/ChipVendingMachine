@@ -2,8 +2,116 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:App.Domain.Models"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="App.Windows.MainWindow"
+        x:Name="Self"
         Title="App">
-    Welcome to Avalonia!
+    <Window.Styles>
+        <Style Selector="Canvas.Place">
+            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+
+            <Style Selector="^:pointerover">
+                <Setter Property="RenderTransform" Value="rotate(360deg)" />
+            </Style>
+
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.Borderless">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        
+        <Style Selector="Viewbox.ChipsImage">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1" />
+                </Transitions>
+            </Setter>
+        </Style>
+    </Window.Styles>
+
+    <Window.Resources>
+        <ConicGradientBrush x:Key="WavesConicGradientBrush">
+            <GradientStops>
+                <GradientStop Color="Transparent" Offset="0" />
+                <GradientStop Color="Transparent" Offset="0.125" />
+                <GradientStop Color="LightBlue" Offset="0.125" />
+                <GradientStop Color="LightBlue" Offset="0.375" />
+                <GradientStop Color="Transparent" Offset="0.375" />
+                <GradientStop Color="Transparent" Offset="0.625" />
+                <GradientStop Color="LightBlue" Offset="0.625" />
+                <GradientStop Color="LightBlue" Offset="0.875" />
+                <GradientStop Color="Transparent" Offset="0.875" />
+                <GradientStop Color="Transparent" Offset="1" />
+            </GradientStops>
+        </ConicGradientBrush>
+    </Window.Resources>
+
+    <Grid ColumnDefinitions="*, Auto, *" RowDefinitions="*, Auto, *">
+        <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto, Auto" Margin="10" Background="Aquamarine">
+            <ItemsControl ItemsSource="{Binding #Self.Chips}" Margin="10" Background="LightBlue">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" MaxWidth="400" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:Chips">
+                        <Button Classes="Borderless" Click="Button_OnClick">
+                            <Panel Margin="10">
+
+                                <Canvas Width="75" Height="75" VerticalAlignment="Bottom">
+                                    <Ellipse Width="75" Height="75" Stroke="Black" StrokeThickness="3" />
+                                </Canvas>
+
+                                <Viewbox MaxWidth="75" MaxHeight="100" Stretch="Uniform" Classes="ChipsImage">
+                                    <Image Source="{Binding Image}" />
+                                </Viewbox>
+
+                                <Canvas Width="75" Height="75" Classes="Place" VerticalAlignment="Bottom">
+                                    <Ellipse Width="75" Height="75" StrokeThickness="3">
+                                        <Ellipse.Stroke>
+                                            <ConicGradientBrush>
+                                                <GradientStops>
+                                                    <GradientStop Color="Black" Offset="0" />
+                                                    <GradientStop Color="Black" Offset="0.5" />
+                                                    <GradientStop Color="Transparent" Offset="0.5" />
+                                                    <GradientStop Color="Transparent" Offset="1" />
+                                                </GradientStops>
+                                            </ConicGradientBrush>
+                                        </Ellipse.Stroke>
+                                    </Ellipse>
+                                    <Ellipse Margin="35 0" Width="3" Height="3" Stroke="LightGray" StrokeThickness="3" />
+                                </Canvas>
+
+                            </Panel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel Grid.Column="1" Margin="10" Spacing="10">
+                <TextBlock Width="100" Height="100" Background="Blue" Foreground="White" Padding="10" />
+
+                <Button Padding="0">
+                    <Panel Background="Blue" Width="75">
+                        <Ellipse StrokeThickness="3" Width="50" Height="50"
+                                 Stroke="{StaticResource WavesConicGradientBrush}" />
+                        <Ellipse StrokeThickness="3" Width="35" Height="35"
+                                 Stroke="{StaticResource WavesConicGradientBrush}" />
+                        <Ellipse StrokeThickness="3" Width="20" Height="20"
+                                 Stroke="{StaticResource WavesConicGradientBrush}" />
+                    </Panel>
+                </Button>
+
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Window>
