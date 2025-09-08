@@ -305,5 +305,13 @@
 
             <Rectangle Grid.Row="2" Grid.Column="0" Margin="10 0 10 10" Height="100" Fill="Black" />
         </Grid>
+        
+        <!--<Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1">
+            <Viewbox RenderTransform="rotate(90deg)" Canvas.Top="245" Canvas.Left="382" Stretch="None" Width="100">
+                <Image MaxHeight="100" MaxWidth="200" Source="avares://App/Assets/Banknotes/fifty-rubles-back.jpg" />
+            </Viewbox>
+        </Canvas>-->
+        
+        <Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1"/>
     </Grid>
 </Window>

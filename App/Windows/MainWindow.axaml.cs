@@ -5,8 +5,11 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using App.Domain.Models;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Transformation;
@@ -17,6 +20,7 @@ namespace App.Windows;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const double DoorY = 485;
+
     public List<Chips> Chips { get; set; } =
     [
         new("salt-and-vinegar.png", 5, 200),
@@ -38,6 +42,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     ];
 
     private int _inserted = 1000;
+
     public int Inserted
     {
         get => _inserted;
@@ -45,6 +50,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private int _balance = 1000;
+
     public int Balance
     {
         get => _balance;
@@ -52,9 +58,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private Button? _selectedChipsButton;
+
     public Button? SelectedChipsButton
     {
-        get  => _selectedChipsButton;
+        get => _selectedChipsButton;
         set => SetField(ref _selectedChipsButton, value);
     }
 
@@ -70,7 +77,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void ChipsButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button {DataContext: Chips chips} button) return;
+        if (sender is not Button { DataContext: Chips chips } button) return;
         if (chips.Image is null) return;
 
         if (SelectedChipsButton is null)
@@ -78,14 +85,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SelectedChipsButton = button;
             return;
         }
-        
+
         if (Inserted < chips.Price)
         {
             await ShowMessage("Недостаточно средств!", TimeSpan.FromSeconds(1));
             return;
         }
+
         Inserted -= chips.Price;
-        
+
         await AnimateChipsFalling(sender);
         await ShowMessage("Сброшено!", TimeSpan.FromSeconds(1));
     }
@@ -97,54 +105,116 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void CoinButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button {Tag: string nominalString}) return;
+        if (sender is not Button { Tag: string nominalString }) return;
         if (!int.TryParse(nominalString, out var nominal)) return;
         Balance -= nominal;
+        Inserted += nominal;
     }
 
-    private void BanknoteButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void BanknoteButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button {Tag: string nominalString}) return;
+        if (sender is not Button
+            {
+                Tag: string nominalString,
+                Content: Viewbox { Child: Image image },
+                Parent: StackPanel { Parent: FlyoutPresenter { Parent: Popup popup } }
+            }) return;
         if (!int.TryParse(nominalString, out var nominal)) return;
+
         Balance -= nominal;
+        Inserted += nominal;
+
+        popup.Close();
+        await AnimateBanknote(image.Source);
     }
 
     private static async Task AnimateChipsFalling(object? sender)
     {
-        if (sender is not Button { Content: Panel panel, Parent: ContentPresenter contentPresenter } || 
-            panel.Children.Count < 3 || 
-            panel.Children[2] is not Viewbox viewbox || 
+        if (sender is not Button { Content: Panel panel, Parent: ContentPresenter contentPresenter } ||
+            panel.Children.Count < 3 ||
+            panel.Children[2] is not Viewbox viewbox ||
             panel.Children[1] is not Canvas place) return;
 
         place.RenderTransform = TransformOperations.Parse("rotate(360deg)");
-        
+
         await Task.Delay(400);
 
         contentPresenter.ZIndex = 100;
-        viewbox.RenderTransform = TransformOperations.Parse($"translateY({((DoorY - contentPresenter.Bounds.Y) * 1.2).ToString("0.00", CultureInfo.InvariantCulture)}px)");
+        viewbox.RenderTransform = TransformOperations.Parse(
+            $"translateY({((DoorY - contentPresenter.Bounds.Y) * 1.2).ToString("0.00", CultureInfo.InvariantCulture)}px)");
 
         await Task.Delay(100);
-        
-        viewbox.RenderTransform = TransformOperations.Parse($"translateY({((DoorY - contentPresenter.Bounds.Y + viewbox.Bounds.Height / 5) * 1.2).ToString("0.00", CultureInfo.InvariantCulture)}px) scaleY(0.8)");
-        
+
+        viewbox.RenderTransform = TransformOperations.Parse(
+            $"translateY({((DoorY - contentPresenter.Bounds.Y + viewbox.Bounds.Height / 5) * 1.2).ToString("0.00", CultureInfo.InvariantCulture)}px) scaleY(0.8)");
+
         await Task.Delay(200);
-        
+
         contentPresenter.ZIndex = 0;
+    }
+
+    private async Task AnimateBanknote(IImage? image)
+    {
+        var viewBox = new Viewbox
+        {
+            RenderTransform = TransformOperations.Parse("rotate(-90deg)"),
+            Transitions =
+            [
+                new DoubleTransition
+                {
+                    Property = Canvas.TopProperty,
+                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Easing = new LinearEasing()
+                },
+                new DoubleTransition
+                {
+                    Property = Canvas.LeftProperty,
+                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Easing = new LinearEasing()
+                },
+                new DoubleTransition
+                {
+                    Property = WidthProperty,
+                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Easing = new LinearEasing()
+                },
+            ],
+            Stretch = Stretch.None,
+            Child = new Image
+            {
+                Source = image,
+                MaxHeight = 100,
+                MaxWidth = 200,
+            },
+            Width = 200,
+        };
+        Canvas.SetLeft(viewBox, 382);
+        Canvas.SetTop(viewBox, 245);
+
+        AnimationCanvas.Children.Add(viewBox);
+
+        Canvas.SetLeft(viewBox, 482);
+        Canvas.SetTop(viewBox, 145);
+        viewBox.Width = 0;
+
+        await Task.Delay(1500);
+
+        AnimationCanvas.Children.Remove(viewBox);
     }
 
     private async Task ShowMessage(string? message, TimeSpan? time = null, string? textAfterEnd = null)
     {
         var previousText = textAfterEnd ?? DisplayTextBlock.Text;
-        
+
         DisplayTextBlock.Text = message;
-        
+
         if (time is null) return;
-        
+
         await Task.Delay(time.Value);
 
         DisplayTextBlock.Text = previousText;
     }
-    
+
     public new event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
