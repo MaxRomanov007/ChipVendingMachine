@@ -307,8 +307,8 @@
         </Grid>
         
         <!--<Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1">
-            <Viewbox RenderTransform="rotate(90deg)" Canvas.Top="245" Canvas.Left="382" Stretch="None" Width="100">
-                <Image MaxHeight="100" MaxWidth="200" Source="avares://App/Assets/Banknotes/fifty-rubles-back.jpg" />
+            <Viewbox Canvas.Top="209" Canvas.Left="396" RenderTransform="rotate(180deg)">
+                <Image MaxHeight="40" MaxWidth="40" Source="avares://App/Assets/Coins/one.png" />
             </Viewbox>
         </Canvas>-->
         

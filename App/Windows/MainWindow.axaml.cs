@@ -103,12 +103,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SelectedChipsButton = null;
     }
 
-    private void CoinButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void CoinButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string nominalString }) return;
+        if (sender is not Button
+            {
+                Tag: string nominalString,
+                Content: Viewbox { Child: Image image },
+                Parent: StackPanel { Parent: FlyoutPresenter { Parent: Popup popup } }
+            }) return;
+        
         if (!int.TryParse(nominalString, out var nominal)) return;
         Balance -= nominal;
         Inserted += nominal;
+
+        popup.Close();
+        await AnimateCoin(image.Source);
     }
 
     private async void BanknoteButton_OnClick(object? sender, RoutedEventArgs e)
@@ -163,19 +172,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 new DoubleTransition
                 {
                     Property = Canvas.TopProperty,
-                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Duration = TimeSpan.FromMilliseconds(1000),
                     Easing = new LinearEasing()
                 },
                 new DoubleTransition
                 {
                     Property = Canvas.LeftProperty,
-                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Duration = TimeSpan.FromMilliseconds(1000),
                     Easing = new LinearEasing()
                 },
                 new DoubleTransition
                 {
                     Property = WidthProperty,
-                    Duration = TimeSpan.FromMilliseconds(1500),
+                    Duration = TimeSpan.FromMilliseconds(1000),
                     Easing = new LinearEasing()
                 },
             ],
@@ -197,7 +206,59 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetTop(viewBox, 145);
         viewBox.Width = 0;
 
-        await Task.Delay(1500);
+        await Task.Delay(1000);
+
+        AnimationCanvas.Children.Remove(viewBox);
+    }
+
+    private async Task AnimateCoin(IImage? coinImage)
+    {
+        var image = new Image
+        {
+            Source = coinImage,
+            MaxHeight = 40,
+            MaxWidth = 40,
+            Transitions = [
+            new TransformOperationsTransition
+            {
+                Property = RenderTransformProperty,
+                Duration = TimeSpan.FromMilliseconds(500),
+                Easing = new CubicEaseInOut()
+            }]
+        };
+
+        var viewBox = new Viewbox
+        {
+            RenderTransform = TransformOperations.Parse("rotate(180deg)"),
+            Transitions =
+            [
+                new DoubleTransition
+                {
+                    Property = Canvas.LeftProperty,
+                    Duration = TimeSpan.FromMilliseconds(500),
+                    Easing = new CubicEaseInOut()
+                },
+                new DoubleTransition
+                {
+                    Property = WidthProperty,
+                    Duration = TimeSpan.FromMilliseconds(500),
+                    Easing = new CubicEaseInOut()
+                },
+            ],
+            Stretch = Stretch.None,
+            Child = image,
+            Width = 40,
+        };
+        Canvas.SetLeft(viewBox, 443);
+        Canvas.SetTop(viewBox, 209);
+
+        AnimationCanvas.Children.Add(viewBox);
+
+        Canvas.SetLeft(viewBox, 436);
+        image.RenderTransform = TransformOperations.Parse("rotate(-90deg)");
+        viewBox.Width = 0;
+
+        await Task.Delay(500);
 
         AnimationCanvas.Children.Remove(viewBox);
     }
