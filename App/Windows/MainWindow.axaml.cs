@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using App.Domain.Models;
 using Avalonia;
@@ -27,6 +28,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const double DoorY = 485;
     private const string CreditCardImagePath = "credit-card.png";
+    private readonly Lock _balanceLock = new Lock();
 
     public List<Chips> Chips { get; set; } =
     [
@@ -48,7 +50,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         new()
     ];
 
-    private int _inserted = 1000;
+    private int _inserted;
 
     public int Inserted
     {
@@ -72,37 +74,42 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set => SetField(ref _selectedChipsButton, value);
     }
 
+    private bool _isFallen;
+    public bool IsFallen
+    {
+        get => _isFallen;
+        set => SetField(ref _isFallen, value);
+    }
+
     public MainWindow()
     {
         InitializeComponent();
     }
 
-    private async void DisplayTextBlock_OnLoaded(object? sender, RoutedEventArgs e)
-    {
-        await ShowMessage("Внесите средства!");
-    }
-
     private async void ChipsButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button { DataContext: Chips chips } button) return;
+        if (sender is not Button { DataContext: Chips chips, Content: Panel panel } button ||
+            panel.Children.Count < 3 ||
+            panel.Children[2] is not Viewbox {Child: Image image}) return;
         if (chips.Image is null) return;
 
-        if (SelectedChipsButton is null)
+        if (IsFallen)
         {
-            SelectedChipsButton = button;
+            SelectedChipsButton = null;
+            chips.Dispose();
+            image.Source = null;
+            IsFallen = false;
             return;
         }
 
-        if (Inserted < chips.Price)
-        {
-            await ShowMessage("Недостаточно средств!", TimeSpan.FromSeconds(1));
-            return;
-        }
+        SelectedChipsButton ??= button;
+
+        if (Inserted < chips.Price) return;
 
         Inserted -= chips.Price;
+        IsFallen = true;
 
         await AnimateChipsFalling(sender);
-        await ShowMessage("Сброшено!", TimeSpan.FromSeconds(1));
     }
 
     private async void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
@@ -119,7 +126,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Content: Viewbox { Child: Image image },
                 Parent: StackPanel { Parent: FlyoutPresenter { Parent: Popup popup } }
             }) return;
-        
+
         if (!int.TryParse(nominalString, out var nominal)) return;
         Balance -= nominal;
         Inserted += nominal;
@@ -153,6 +160,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void AddMoneyButton_OnClick(object? sender, RoutedEventArgs e)
     {
         Balance += 100;
+    }
+
+    private async Task InsertMoney(int money)
+    {
+        int balance;
+        lock (_balanceLock)
+        {
+            balance = Balance;
+        }
+
+        if (balance < money) return;
+
+        lock (_balanceLock)
+        {
+            Balance -= money;
+            Inserted += money;
+        }
     }
 
     private static async Task AnimateChipsFalling(object? sender)
@@ -235,13 +259,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Source = coinImage,
             MaxHeight = 40,
             MaxWidth = 40,
-            Transitions = [
-            new TransformOperationsTransition
-            {
-                Property = RenderTransformProperty,
-                Duration = TimeSpan.FromMilliseconds(500),
-                Easing = new CubicEaseInOut()
-            }]
+            Transitions =
+            [
+                new TransformOperationsTransition
+                {
+                    Property = RenderTransformProperty,
+                    Duration = TimeSpan.FromMilliseconds(500),
+                    Easing = new CubicEaseInOut()
+                }
+            ]
         };
 
         var viewBox = new Viewbox
@@ -281,8 +307,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async Task AnimateCard()
     {
-        using var cardImage = new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Cards", CreditCardImagePath))));
-        
+        using var cardImage =
+            new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Cards", CreditCardImagePath))));
+
         var viewBox = new Viewbox
         {
             Transitions =
@@ -313,7 +340,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetTop(viewBox, 117);
 
         AnimationCanvas.Children.Add(viewBox);
-        
+
         viewBox.Opacity = 1;
         await Task.Delay(300);
         Canvas.SetLeft(viewBox, 436);
@@ -330,8 +357,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var coins = new[]
         {
-            CreateFictiveCoins(new Point(440, 260)), 
-            CreateFictiveCoins(new Point(469, 260)), 
+            CreateFictiveCoins(new Point(440, 260)),
+            CreateFictiveCoins(new Point(469, 260)),
             CreateFictiveCoins(new Point(497, 260))
         };
         AnimationCanvas.Children.AddRange(coins);
@@ -344,7 +371,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetLeft(rectangle, 431.5);
         Canvas.SetTop(rectangle, 259);
         AnimationCanvas.Children.Add(rectangle);
-        
+
         Canvas.SetTop(coins[0], 315);
         Canvas.SetTop(coins[1], 329);
         Canvas.SetTop(coins[2], 318);
@@ -353,7 +380,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         coins[1].Opacity = 0;
         coins[2].Opacity = 0;
         await Task.Delay(300);
-        
+
         AnimationCanvas.Children.Remove(coins[0]);
         AnimationCanvas.Children.Remove(coins[1]);
         AnimationCanvas.Children.Remove(coins[2]);
@@ -387,21 +414,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
         Canvas.SetLeft(coin, position.X);
         Canvas.SetTop(coin, position.Y);
-        
+
         return coin;
-    }
-
-    private async Task ShowMessage(string? message, TimeSpan? time = null, string? textAfterEnd = null)
-    {
-        var previousText = textAfterEnd ?? DisplayTextBlock.Text;
-
-        DisplayTextBlock.Text = message;
-
-        if (time is null) return;
-
-        await Task.Delay(time.Value);
-
-        DisplayTextBlock.Text = previousText;
     }
 
     public new event PropertyChangedEventHandler? PropertyChanged;

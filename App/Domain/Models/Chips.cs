@@ -25,5 +25,8 @@ public class Chips : IDisposable
     public void Dispose()
     {
         Image?.Dispose();
+        Image = null;
+        Quantity = 0;
+        Price = 0;
     }
 }
