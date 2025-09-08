@@ -2,21 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using App.Domain.Models;
+using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Media.Immutable;
 using Avalonia.Media.Transformation;
 using Avalonia.Platform;
 using Microsoft.VisualBasic;
+using Path = System.IO.Path;
 
 namespace App.Windows;
 
@@ -102,9 +105,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         await ShowMessage("Сброшено!", TimeSpan.FromSeconds(1));
     }
 
-    private void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
+    private async void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
     {
         SelectedChipsButton = null;
+        await AnimateCashBack();
     }
 
     private async void CoinButton_OnClick(object? sender, RoutedEventArgs e)
@@ -219,7 +223,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetLeft(viewBox, 482);
         Canvas.SetTop(viewBox, 145);
         viewBox.Width = 0;
-
         await Task.Delay(1000);
 
         AnimationCanvas.Children.Remove(viewBox);
@@ -271,7 +274,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Canvas.SetLeft(viewBox, 436);
         image.RenderTransform = TransformOperations.Parse("rotate(-90deg)");
         viewBox.Width = 0;
-
         await Task.Delay(500);
 
         AnimationCanvas.Children.Remove(viewBox);
@@ -313,22 +315,80 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AnimationCanvas.Children.Add(viewBox);
         
         viewBox.Opacity = 1;
-        
         await Task.Delay(300);
-        
         Canvas.SetLeft(viewBox, 436);
-        
         await Task.Delay(800);
-        
         Canvas.SetLeft(viewBox, 556);
-        
         await Task.Delay(300);
-        
         viewBox.Opacity = 0;
-        
         await Task.Delay(300);
 
         AnimationCanvas.Children.Remove(viewBox);
+    }
+
+    public async Task AnimateCashBack()
+    {
+        var coins = new[]
+        {
+            CreateFictiveCoins(new Point(440, 260)), 
+            CreateFictiveCoins(new Point(469, 260)), 
+            CreateFictiveCoins(new Point(497, 260))
+        };
+        AnimationCanvas.Children.AddRange(coins);
+        var rectangle = new Rectangle
+        {
+            Width = 100,
+            Height = 50,
+            Fill = new ImmutableSolidColorBrush(Colors.Aquamarine)
+        };
+        Canvas.SetLeft(rectangle, 431.5);
+        Canvas.SetTop(rectangle, 259);
+        AnimationCanvas.Children.Add(rectangle);
+        
+        Canvas.SetTop(coins[0], 315);
+        Canvas.SetTop(coins[1], 329);
+        Canvas.SetTop(coins[2], 318);
+        await Task.Delay(800);
+        coins[0].Opacity = 0;
+        coins[1].Opacity = 0;
+        coins[2].Opacity = 0;
+        await Task.Delay(300);
+        
+        AnimationCanvas.Children.Remove(coins[0]);
+        AnimationCanvas.Children.Remove(coins[1]);
+        AnimationCanvas.Children.Remove(coins[2]);
+        AnimationCanvas.Children.Remove(rectangle);
+    }
+
+    public static Ellipse CreateFictiveCoins(Point position = default)
+    {
+        var coin = new Ellipse
+        {
+            Width = 25,
+            Height = 25,
+            Fill = new ImmutableSolidColorBrush(Colors.Gold),
+            Stroke = new ImmutableSolidColorBrush(Colors.LightGoldenrodYellow),
+            StrokeThickness = 1,
+            Transitions =
+            [
+                new DoubleTransition
+                {
+                    Property = Canvas.TopProperty,
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new QuadraticEaseInOut()
+                },
+                new DoubleTransition
+                {
+                    Property = OpacityProperty,
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new LinearEasing()
+                },
+            ],
+        };
+        Canvas.SetLeft(coin, position.X);
+        Canvas.SetTop(coin, position.Y);
+        
+        return coin;
     }
 
     private async Task ShowMessage(string? message, TimeSpan? time = null, string? textAfterEnd = null)

@@ -302,6 +302,8 @@
                         </TextBlock>
                     </Button>
                 </StackPanel>
+                
+                <Rectangle Width="100" Height="50" Fill="Black" Margin="0 45 0 0 "/>
 
             </StackPanel>
 
@@ -309,12 +311,6 @@
 
             <Rectangle Grid.Row="2" Grid.Column="0" Margin="10 0 10 10" Height="100" Fill="Black" />
         </Grid>
-
-        <!--<Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1">
-            <Viewbox Canvas.Top="117" Canvas.Left="556">
-                <Image MaxHeight="60" MaxWidth="90" Source="avares://App/Assets/Cards/credit-card1.png" />
-            </Viewbox>
-        </Canvas>-->
 
         <Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1" />
     </Grid>
