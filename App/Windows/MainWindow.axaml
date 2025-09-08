@@ -185,29 +185,37 @@
 
             <StackPanel Grid.Row="0" Grid.Column="1" Margin="10" Spacing="10">
                 <StackPanel Background="Blue">
-                    <Panel IsVisible="{Binding !#Self.IsFallen}">
+                    <Panel IsVisible="{Binding !#Self.IsNotEnoughMoney}">
+                        <Panel IsVisible="{Binding !#Self.IsFallen}">
+                            <TextBlock TextWrapping="Wrap"
+                                       Width="100" Height="80"
+                                       Foreground="White"
+                                       Text="Выберите товар"
+                                       Padding="10"
+                                       IsVisible="{Binding #Self.SelectedChipsButton, Converter={StaticResource IsNullConverter}}" />
+                            <StackPanel Margin="10" Height="60" Spacing="5"
+                                        x:DataType="models:Chips"
+                                        DataContext="{Binding #Self.SelectedChipsButton.DataContext}"
+                                        IsVisible="{Binding #Self.SelectedChipsButton, Converter={StaticResource IsNotNullConverter}}">
+                                <TextBlock Foreground="White"
+                                           Text="Цена:" />
+                                <TextBlock Foreground="White"
+                                           Text="{Binding Price}" />
+                            </StackPanel>
+                        </Panel>
                         <TextBlock TextWrapping="Wrap"
                                    Width="100" Height="80"
                                    Foreground="White"
-                                   Text="Выберите товар"
+                                   Text="Поднимите товар"
                                    Padding="10"
-                                   IsVisible="{Binding #Self.SelectedChipsButton, Converter={StaticResource IsNullConverter}}" />
-                        <StackPanel Margin="10" Height="60" Spacing="5"
-                                    x:DataType="models:Chips"
-                                    DataContext="{Binding #Self.SelectedChipsButton.DataContext}"
-                                    IsVisible="{Binding #Self.SelectedChipsButton, Converter={StaticResource IsNotNullConverter}}">
-                            <TextBlock Foreground="White"
-                                       Text="Цена:" />
-                            <TextBlock Foreground="White"
-                                       Text="{Binding Price}" />
-                        </StackPanel>
+                                   IsVisible="{Binding #Self.IsFallen}" />
                     </Panel>
                     <TextBlock TextWrapping="Wrap"
                                Width="100" Height="80"
                                Foreground="White"
-                               Text="Поднимите товар"
-                               Padding="10"
-                               IsVisible="{Binding #Self.IsFallen}" />
+                               Text="Не хватает средств"
+                               Padding="10 10 10 0"
+                               IsVisible="{Binding #Self.IsNotEnoughMoney}" />
 
                     <StackPanel Orientation="Horizontal" Height="20" Margin="10 0" Spacing="3">
                         <TextBlock

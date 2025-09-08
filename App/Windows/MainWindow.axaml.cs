@@ -75,10 +75,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private bool _isFallen;
+
     public bool IsFallen
     {
         get => _isFallen;
         set => SetField(ref _isFallen, value);
+    }
+
+    private bool _isNotEnoughMoneyMoney;
+
+    public bool IsNotEnoughMoney
+    {
+        get => _isNotEnoughMoneyMoney;
+        set => SetField(ref _isNotEnoughMoneyMoney, value);
     }
 
     public MainWindow()
@@ -90,7 +99,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (sender is not Button { DataContext: Chips chips, Content: Panel panel } button ||
             panel.Children.Count < 3 ||
-            panel.Children[2] is not Viewbox {Child: Image image}) return;
+            panel.Children[2] is not Viewbox { Child: Image image }) return;
         if (chips.Image is null) return;
 
         if (IsFallen)
@@ -104,17 +113,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         SelectedChipsButton ??= button;
 
-        if (Inserted < chips.Price) return;
-
-        Inserted -= chips.Price;
-        IsFallen = true;
-
-        await AnimateChipsFalling(sender);
+        await ByeChips(sender);
     }
 
     private async void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
     {
         SelectedChipsButton = null;
+        if (Inserted == 0) return;
+
+        lock (_balanceLock)
+        {
+            Balance += Inserted;
+            Inserted = 0;
+        }
+
         await AnimateCashBack();
     }
 
@@ -128,11 +140,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }) return;
 
         if (!int.TryParse(nominalString, out var nominal)) return;
-        Balance -= nominal;
-        Inserted += nominal;
 
         popup.Close();
         await AnimateCoin(image.Source);
+
+        await InsertMoney(nominal);
     }
 
     private async void BanknoteButton_OnClick(object? sender, RoutedEventArgs e)
@@ -145,16 +157,30 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }) return;
         if (!int.TryParse(nominalString, out var nominal)) return;
 
-        Balance -= nominal;
-        Inserted += nominal;
-
         popup.Close();
         await AnimateBanknote(image.Source);
+
+        await InsertMoney(nominal);
     }
 
     private async void CardButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        await AnimateCard();
+        if (SelectedChipsButton?.DataContext is not Chips chips) return;
+        if (IsFallen) return;
+
+        var action = async () => await InsertMoney(chips.Price);
+        
+        if (Balance < chips.Price - Inserted)
+        {
+            action = async () =>
+            {
+                IsNotEnoughMoney = true;
+                await Task.Delay(1000);
+                IsNotEnoughMoney = false;
+            };
+        }
+
+        await AnimateCard(action);
     }
 
     private void AddMoneyButton_OnClick(object? sender, RoutedEventArgs e)
@@ -177,6 +203,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Balance -= money;
             Inserted += money;
         }
+
+        if (SelectedChipsButton is not null)
+        {
+            await ByeChips(SelectedChipsButton);
+        }
+    }
+
+    private async Task ByeChips(object? sender)
+    {
+        if (sender is not Button { DataContext: Chips chips }) return;
+
+        lock (_balanceLock)
+        {
+            if (IsFallen) return;
+            if (Inserted < chips.Price) return;
+
+            Inserted -= chips.Price;
+            IsFallen = true;
+        }
+
+        await AnimateChipsFalling(sender);
     }
 
     private static async Task AnimateChipsFalling(object? sender)
@@ -305,7 +352,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AnimationCanvas.Children.Remove(viewBox);
     }
 
-    private async Task AnimateCard()
+    private async Task AnimateCard(Func<Task> onCenter)
     {
         using var cardImage =
             new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Cards", CreditCardImagePath))));
@@ -344,7 +391,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         viewBox.Opacity = 1;
         await Task.Delay(300);
         Canvas.SetLeft(viewBox, 436);
-        await Task.Delay(800);
+        await Task.Delay(550);
+        await onCenter.Invoke();
+        await Task.Delay(250);
         Canvas.SetLeft(viewBox, 556);
         await Task.Delay(300);
         viewBox.Opacity = 0;
@@ -369,7 +418,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Fill = new ImmutableSolidColorBrush(Colors.Aquamarine)
         };
         Canvas.SetLeft(rectangle, 431.5);
-        Canvas.SetTop(rectangle, 259);
+        Canvas.SetTop(rectangle, 255);
         AnimationCanvas.Children.Add(rectangle);
 
         Canvas.SetTop(coins[0], 315);
