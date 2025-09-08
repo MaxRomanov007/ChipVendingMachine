@@ -8,16 +8,14 @@ namespace App.Domain.Models;
 public class Chips : IDisposable
 {
     public Bitmap? Image { get; set; }
-    public int Quantity { get; set; }
     public int Price { get; set; }
 
     public Chips()
     {
     }
 
-    public Chips(string assetPath, int quantity, int price)
+    public Chips(string assetPath, int price)
     {
-        Quantity = quantity;
         Price = price;
         Image = new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Chips", assetPath))));
     }
@@ -26,7 +24,6 @@ public class Chips : IDisposable
     {
         Image?.Dispose();
         Image = null;
-        Quantity = 0;
         Price = 0;
     }
 }

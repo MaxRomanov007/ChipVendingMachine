@@ -28,25 +28,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const double DoorY = 485;
     private const string CreditCardImagePath = "credit-card.png";
-    private readonly Lock _balanceLock = new Lock();
+    private readonly Lock _balanceLock = new();
 
     public List<Chips> Chips { get; set; } =
     [
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
-        new("salt-and-vinegar.png", 5, 200),
+        new("cheese.png", 180),
+        new("crab.png", 200),
+        new("green-onion.png", 220),
+        new("honey-barbecue.png", 145),
+        new("paprika.png", 135),
+        new("salmon-in-cream-sauce.png", 654),
+        new("salt.png", 76),
+        new("salt-and-vinegar.png", 520),
+        new("sour-cream-and-herbs.png", 250),
+        new("white-mushrooms.png", 390),
+        new("cheese.png", 990),
+        new("crab.png", 1000),
+        new("green-onion.png", 120),
+        new("honey-barbecue.png", 135),
+        new("paprika.png", 210),
         new()
     ];
 
@@ -118,7 +118,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void CashBackButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SelectedChipsButton = null;
+        if (!IsFallen)
+            SelectedChipsButton = null;
         if (Inserted == 0) return;
 
         lock (_balanceLock)
@@ -169,7 +170,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (IsFallen) return;
 
         var action = async () => await InsertMoney(chips.Price);
-        
+
         if (Balance < chips.Price - Inserted)
         {
             action = async () =>
