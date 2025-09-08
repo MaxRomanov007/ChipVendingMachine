@@ -6,6 +6,7 @@
         xmlns:converters="clr-namespace:App.Converters"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="900"
         x:Class="App.Windows.MainWindow"
+        WindowStartupLocation="CenterScreen"
         x:Name="Self"
         Title="App">
 
@@ -78,7 +79,7 @@
             </Style>
 
             <Style Selector="^:disabled Viewbox">
-                <Setter Property="Opacity" Value="0.5"/>
+                <Setter Property="Opacity" Value="0.5" />
             </Style>
         </Style>
 
@@ -90,7 +91,7 @@
             </Style>
 
             <Style Selector="^:disabled Viewbox">
-                <Setter Property="Opacity" Value="0.5"/>
+                <Setter Property="Opacity" Value="0.5" />
             </Style>
         </Style>
     </Window.Styles>
@@ -99,8 +100,11 @@
 
         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0 10"
                     Spacing="5">
-            <TextBlock>Баланс:</TextBlock>
-            <TextBlock Text="{Binding #Self.Balance}" />
+            <Button Content="Мам, купи!" Click="AddMoneyButton_OnClick" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="5">
+                <TextBlock>Баланс:</TextBlock>
+                <TextBlock Text="{Binding #Self.Balance}" />
+            </StackPanel>
         </StackPanel>
 
         <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="Auto, Auto" RowDefinitions="Auto, Auto, Auto"
@@ -187,7 +191,7 @@
                            Foreground="White"
                            Padding="10" />
 
-                <Button Classes="Borderless">
+                <Button Classes="Borderless" Click="CardButton_OnClick">
                     <Panel Background="Blue" Width="75">
                         <Ellipse StrokeThickness="3" Width="50" Height="50"
                                  Stroke="{StaticResource WavesConicGradientBrush}" />
@@ -305,13 +309,13 @@
 
             <Rectangle Grid.Row="2" Grid.Column="0" Margin="10 0 10 10" Height="100" Fill="Black" />
         </Grid>
-        
+
         <!--<Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1">
-            <Viewbox Canvas.Top="209" Canvas.Left="396" RenderTransform="rotate(180deg)">
-                <Image MaxHeight="40" MaxWidth="40" Source="avares://App/Assets/Coins/one.png" />
+            <Viewbox Canvas.Top="117" Canvas.Left="556">
+                <Image MaxHeight="60" MaxWidth="90" Source="avares://App/Assets/Cards/credit-card1.png" />
             </Viewbox>
         </Canvas>-->
-        
-        <Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1"/>
+
+        <Canvas x:Name="AnimationCanvas" Grid.Row="2" Grid.Column="1" />
     </Grid>
 </Window>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using App.Domain.Models;
@@ -12,7 +13,9 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Media.Transformation;
+using Avalonia.Platform;
 using Microsoft.VisualBasic;
 
 namespace App.Windows;
@@ -20,6 +23,7 @@ namespace App.Windows;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const double DoorY = 485;
+    private const string CreditCardImagePath = "credit-card.png";
 
     public List<Chips> Chips { get; set; } =
     [
@@ -135,6 +139,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         popup.Close();
         await AnimateBanknote(image.Source);
+    }
+
+    private async void CardButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await AnimateCard();
+    }
+
+    private void AddMoneyButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Balance += 100;
     }
 
     private static async Task AnimateChipsFalling(object? sender)
@@ -259,6 +273,60 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         viewBox.Width = 0;
 
         await Task.Delay(500);
+
+        AnimationCanvas.Children.Remove(viewBox);
+    }
+
+    private async Task AnimateCard()
+    {
+        using var cardImage = new Bitmap(AssetLoader.Open(new Uri(Path.Combine("avares://App/Assets/Cards", CreditCardImagePath))));
+        
+        var viewBox = new Viewbox
+        {
+            Transitions =
+            [
+                new DoubleTransition
+                {
+                    Property = Canvas.LeftProperty,
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new QuadraticEaseInOut()
+                },
+                new DoubleTransition
+                {
+                    Property = OpacityProperty,
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new LinearEasing()
+                },
+            ],
+            Opacity = 0,
+            Stretch = Stretch.None,
+            Child = new Image
+            {
+                Source = cardImage,
+                MaxHeight = 60,
+                MaxWidth = 90,
+            },
+        };
+        Canvas.SetLeft(viewBox, 556);
+        Canvas.SetTop(viewBox, 117);
+
+        AnimationCanvas.Children.Add(viewBox);
+        
+        viewBox.Opacity = 1;
+        
+        await Task.Delay(300);
+        
+        Canvas.SetLeft(viewBox, 436);
+        
+        await Task.Delay(800);
+        
+        Canvas.SetLeft(viewBox, 556);
+        
+        await Task.Delay(300);
+        
+        viewBox.Opacity = 0;
+        
+        await Task.Delay(300);
 
         AnimationCanvas.Children.Remove(viewBox);
     }
